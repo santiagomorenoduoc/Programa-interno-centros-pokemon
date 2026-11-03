@@ -1,0 +1,29 @@
+[
+  {
+    "id": "joy-001",
+    "centro_id": "cp-verde",
+    "nombre": "Enfermera Joy (Ciudad Verde)",
+    "telefono": "+56988888888",
+    "correo": "joy.verde@pkmn.center",
+    "cargo": "Enfermera Jefe",
+    "activa": true
+  },
+  {
+    "id": "joy-002",
+    "centro_id": "cp-verde",
+    "nombre": "Chansey Asistente",
+    "telefono": "+56999999999",
+    "correo": "chansey.verde@pkmn.center",
+    "cargo": "Asistente Médico",
+    "activa": true
+  },
+  {
+    "id": "joy-003",
+    "centro_id": "cp-plateada",
+    "nombre": "Enfermera Joy (Ciudad Plateada)",
+    "telefono": "+56977777777",
+    "correo": "joy.plateada@pkmn.center",
+    "cargo": "Enfermera Jefe",
+    "activa": true
+  }
+]

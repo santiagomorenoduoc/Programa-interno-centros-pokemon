@@ -1,0 +1,23 @@
+[
+  {
+    "id": "ent-001",
+    "nombre": "Ash Ketchum",
+    "telefono": "+56911111111",
+    "correo": "ash@pallet.town",
+    "licencia_oficial": true
+  },
+  {
+    "id": "ent-002",
+    "nombre": "Misty Waterflower",
+    "telefono": "+56922222222",
+    "correo": "misty@cerulean.gym",
+    "licencia_oficial": true
+  },
+  {
+    "id": "ent-003",
+    "nombre": "Brock Slate",
+    "telefono": "+56933333333",
+    "correo": "brock@pewter.gym",
+    "licencia_oficial": true
+  }
+]

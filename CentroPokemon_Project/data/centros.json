@@ -1,0 +1,16 @@
+[
+  {
+    "id": "cp-verde",
+    "nombre": "Centro Pokémon Ciudad Verde",
+    "ubicacion": "Región Kanto — Ruta 1",
+    "fondos": 12000,
+    "activo": true
+  },
+  {
+    "id": "cp-plateada",
+    "nombre": "Centro Pokémon Ciudad Plateada",
+    "ubicacion": "Región Kanto — Ruta 3",
+    "fondos": 8500,
+    "activo": true
+  }
+]

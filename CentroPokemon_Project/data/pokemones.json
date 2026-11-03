@@ -1,0 +1,40 @@
+[
+  {
+    "id": "pkm-001",
+    "centro_id": "cp-verde",
+    "nombre": "Pikachu",
+    "especie": "Pikachu",
+    "tipo": "Eléctrico",
+    "nivel": 25,
+    "hp_actual": 0,
+    "hp_maximo": 60,
+    "pokebola": "Pokébola Standard",
+    "sintomas": "Agotamiento severo tras combate contra Gym",
+    "entrenador_id": "ent-001",
+    "enfermera_id": null,
+    "medicina_usada_id": null,
+    "estado": "ADMITIDO",
+    "historial": [
+      "ADMITIDO"
+    ]
+  },
+  {
+    "id": "pkm-002",
+    "centro_id": "cp-plateada",
+    "nombre": "Onix",
+    "especie": "Onix",
+    "tipo": "Roca/Tierra",
+    "nivel": 30,
+    "hp_actual": 10,
+    "hp_maximo": 90,
+    "pokebola": "Superball",
+    "sintomas": "Fisuras leves en coraza tras combate",
+    "entrenador_id": "ent-003",
+    "enfermera_id": null,
+    "medicina_usada_id": null,
+    "estado": "ADMITIDO",
+    "historial": [
+      "ADMITIDO"
+    ]
+  }
+]

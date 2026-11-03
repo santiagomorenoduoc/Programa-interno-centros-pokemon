@@ -1,0 +1,16 @@
+[
+  {
+    "exitosa": true,
+    "referencia": "DON-MON-INIT1",
+    "centro_id": "cp-verde",
+    "tipo": "Monetaria",
+    "mensaje": "Aporte inicial de la Liga Pokémon a Ciudad Verde ₽12,000"
+  },
+  {
+    "exitosa": true,
+    "referencia": "DON-MON-INIT2",
+    "centro_id": "cp-plateada",
+    "tipo": "Monetaria",
+    "mensaje": "Aporte inicial de la Liga Pokémon a Ciudad Plateada ₽8,500"
+  }
+]

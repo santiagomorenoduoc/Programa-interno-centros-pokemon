@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "centropkmn"
+version = "2.0.0"
+description = "Sistema multi-sede de gestión médica gratuita y donaciones para Centros Pokémon"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+centropkmn = "centropkmn.__main__:main"
+centropkmn-demo = "centropkmn.demo:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "med-001",
+    "centro_id": "cp-verde",
+    "categoria": "Medicina",
+    "nombre": "Poción Standard",
+    "cantidad": 15,
+    "descripcion": "Restaura 20 PS de un Pokémon debilitado",
+    "puntos_curacion": 20
+  },
+  {
+    "id": "med-002",
+    "centro_id": "cp-verde",
+    "categoria": "Medicina",
+    "nombre": "Superpoción",
+    "cantidad": 8,
+    "descripcion": "Restaura 50 PS de un Pokémon debilitado",
+    "puntos_curacion": 50
+  },
+  {
+    "id": "ball-001",
+    "centro_id": "cp-verde",
+    "categoria": "Pokébola/Captura",
+    "nombre": "Pokébola",
+    "cantidad": 20,
+    "descripcion": "Dispositivo básico para capturar Pokémon",
+    "ratio_captura": 1.0
+  },
+  {
+    "id": "med-003",
+    "centro_id": "cp-plateada",
+    "categoria": "Medicina",
+    "nombre": "Hiperpoción",
+    "cantidad": 10,
+    "descripcion": "Restaura 120 PS de un Pokémon debilitado",
+    "puntos_curacion": 120
+  },
+  {
+    "id": "med-maxpocion-01",
+    "centro_id": "cp-verde",
+    "categoria": "Medicina",
+    "nombre": "Max Poción Cítrica",
+    "cantidad": 75,
+    "descripcion": "Restablece 200 PS de salud",
+    "puntos_curacion": 200
+  },
+  {
+    "id": "ball-ultraball-01",
+    "centro_id": "cp-verde",
+    "categoria": "Pokébola/Captura",
+    "nombre": "Ultraball de Lujo",
+    "cantidad": 15,
+    "descripcion": "Dispositivo de captura con alto ratio de éxito",
+    "ratio_captura": 2.0
+  }
+]

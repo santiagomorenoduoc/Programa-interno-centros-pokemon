@@ -1,0 +1,29 @@
+# Entorno virtual
+.venv/
+venv/
+env/
+ENV/
+
+# Archivos de caché y compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Metadatos de empaquetado (setuptools / pip install -e .)
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Archivos temporales de la persistencia atómica JSON
+*.tmp
+*.json.tmp
+
+# Configuración de editores e IDEs
+.vscode/
+.idea/
+*.swp
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
