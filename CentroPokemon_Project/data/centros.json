@@ -12,5 +12,19 @@
     "ubicacion": "Región Kanto — Ruta 3",
     "fondos": 8500,
     "activo": true
+  },
+  {
+    "id": "cp-3042fd",
+    "nombre": "Centro ruta 101",
+    "ubicacion": "Hoenn",
+    "fondos": 5000,
+    "activo": true
+  },
+  {
+    "id": "cp-cbbf0a",
+    "nombre": "Centro ciudad Azulona",
+    "ubicacion": "Kanto",
+    "fondos": 10000,
+    "activo": true
   }
 ]

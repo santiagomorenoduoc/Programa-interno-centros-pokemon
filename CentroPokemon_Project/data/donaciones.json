@@ -12,5 +12,26 @@
     "centro_id": "cp-plateada",
     "tipo": "Monetaria",
     "mensaje": "Aporte inicial de la Liga Pokémon a Ciudad Plateada ₽8,500"
+  },
+  {
+    "exitosa": true,
+    "referencia": "DON-OBJ-118D5F",
+    "centro_id": "cp-3042fd",
+    "tipo": "Objetos e Insumos",
+    "mensaje": "Ingresadas 5 unidades de Pocion al inventario de Centro ruta 101. Donado por Ash."
+  },
+  {
+    "exitosa": true,
+    "referencia": "DON-MON-B5FF44",
+    "centro_id": "cp-cbbf0a",
+    "tipo": "Monetaria",
+    "mensaje": "Aporte voluntario de ₽5,000 recibido para Centro ciudad Azulona vía Efectivo. ¡Gracias Misty!"
+  },
+  {
+    "exitosa": true,
+    "referencia": "DON-OBJ-308F9F",
+    "centro_id": "cp-cbbf0a",
+    "tipo": "Objetos e Insumos",
+    "mensaje": "Ingresadas 5 unidades de Pocion al inventario de Centro ciudad Azulona. Donado por Ash."
   }
 ]

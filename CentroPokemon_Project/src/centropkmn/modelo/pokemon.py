@@ -25,7 +25,7 @@ _TRANSICIONES = {
     EstadoPokemon.ADMITIDO: {EstadoPokemon.EN_REVISION, EstadoPokemon.CANCELADO},
     EstadoPokemon.EN_REVISION: {EstadoPokemon.EN_TRATAMIENTO, EstadoPokemon.TRATADO, EstadoPokemon.CANCELADO},
     EstadoPokemon.EN_TRATAMIENTO: {EstadoPokemon.TRATADO, EstadoPokemon.CANCELADO},
-    EstadoPokemon.TRATADO: {EstadoPokemon.ALTA},
+    EstadoPokemon.TRATADO: {EstadoPokemon.ALTA,EstadoPokemon.EN_REVISION},
     EstadoPokemon.ALTA: set(),
     EstadoPokemon.CANCELADO: set(),
 }

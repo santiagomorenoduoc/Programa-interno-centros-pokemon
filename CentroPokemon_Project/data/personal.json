@@ -25,5 +25,23 @@
     "correo": "joy.plateada@pkmn.center",
     "cargo": "Enfermera Jefe",
     "activa": true
+  },
+  {
+    "id": "joy-9ac529",
+    "centro_id": "cp-3042fd",
+    "nombre": "Enfermera Joy",
+    "telefono": "+5696679403",
+    "correo": "joy@pkmn.center",
+    "cargo": "Enfermera Jefe",
+    "activa": true
+  },
+  {
+    "id": "joy-4acd8c",
+    "centro_id": "cp-cbbf0a",
+    "nombre": "Enfermera Joy",
+    "telefono": "+5696679403",
+    "correo": "joy@pkmn.center",
+    "cargo": "Enfermera Jefe",
+    "activa": true
   }
 ]

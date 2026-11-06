@@ -6,16 +6,19 @@
     "especie": "Pikachu",
     "tipo": "Eléctrico",
     "nivel": 25,
-    "hp_actual": 0,
+    "hp_actual": 60,
     "hp_maximo": 60,
     "pokebola": "Pokébola Standard",
     "sintomas": "Agotamiento severo tras combate contra Gym",
     "entrenador_id": "ent-001",
-    "enfermera_id": null,
-    "medicina_usada_id": null,
-    "estado": "ADMITIDO",
+    "enfermera_id": "joy-001",
+    "medicina_usada_id": "med-maxpocion-01",
+    "estado": "EN_REVISION",
     "historial": [
-      "ADMITIDO"
+      "ADMITIDO",
+      "EN_REVISION",
+      "TRATADO",
+      "EN_REVISION"
     ]
   },
   {
@@ -35,6 +38,72 @@
     "estado": "ADMITIDO",
     "historial": [
       "ADMITIDO"
+    ]
+  },
+  {
+    "id": "pkm-56b65a",
+    "centro_id": "cp-3042fd",
+    "nombre": "Charizard",
+    "especie": "Charizard",
+    "tipo": "Fuego/Volador",
+    "nivel": 100,
+    "hp_actual": 150,
+    "hp_maximo": 150,
+    "pokebola": "Superball",
+    "sintomas": "Debilitado tras batalla",
+    "entrenador_id": "ent-001",
+    "enfermera_id": "joy-9ac529",
+    "medicina_usada_id": "med-ff4531",
+    "estado": "TRATADO",
+    "historial": [
+      "ADMITIDO",
+      "EN_REVISION",
+      "TRATADO"
+    ]
+  },
+  {
+    "id": "pkm-1d3ad3",
+    "centro_id": "cp-cbbf0a",
+    "nombre": "Spoink",
+    "especie": "Spoink",
+    "tipo": "Psiquisico",
+    "nivel": 20,
+    "hp_actual": 20,
+    "hp_maximo": 70,
+    "pokebola": "Pokeball",
+    "sintomas": "Debilitado por envenenamiento",
+    "entrenador_id": "ent-100d4d",
+    "enfermera_id": "joy-4acd8c",
+    "medicina_usada_id": "med-def27b",
+    "estado": "ALTA",
+    "historial": [
+      "ADMITIDO",
+      "EN_REVISION",
+      "TRATADO",
+      "ALTA"
+    ]
+  },
+  {
+    "id": "pkm-5a86ad",
+    "centro_id": "cp-verde",
+    "nombre": "Ratata",
+    "especie": "Ratata",
+    "tipo": "Normal",
+    "nivel": 5,
+    "hp_actual": 40,
+    "hp_maximo": 40,
+    "pokebola": "Pokébola Standard",
+    "sintomas": "Debilitado tras batalla",
+    "entrenador_id": "ent-001",
+    "enfermera_id": "joy-001",
+    "medicina_usada_id": "med-001",
+    "estado": "TRATADO",
+    "historial": [
+      "ADMITIDO",
+      "EN_REVISION",
+      "TRATADO",
+      "EN_REVISION",
+      "TRATADO"
     ]
   }
 ]

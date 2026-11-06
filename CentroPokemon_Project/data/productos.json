@@ -4,7 +4,7 @@
     "centro_id": "cp-verde",
     "categoria": "Medicina",
     "nombre": "Poción Standard",
-    "cantidad": 15,
+    "cantidad": 13,
     "descripcion": "Restaura 20 PS de un Pokémon debilitado",
     "puntos_curacion": 20
   },
@@ -40,7 +40,7 @@
     "centro_id": "cp-verde",
     "categoria": "Medicina",
     "nombre": "Max Poción Cítrica",
-    "cantidad": 75,
+    "cantidad": 74,
     "descripcion": "Restablece 200 PS de salud",
     "puntos_curacion": 200
   },
@@ -52,5 +52,32 @@
     "cantidad": 15,
     "descripcion": "Dispositivo de captura con alto ratio de éxito",
     "ratio_captura": 2.0
+  },
+  {
+    "id": "med-ff4531",
+    "centro_id": "cp-3042fd",
+    "categoria": "Medicina",
+    "nombre": "Restaurar todo",
+    "cantidad": 9,
+    "descripcion": "Restaura puntos de salud",
+    "puntos_curacion": 500
+  },
+  {
+    "id": "med-51349c",
+    "centro_id": "cp-3042fd",
+    "categoria": "Medicina",
+    "nombre": "Pocion",
+    "cantidad": 5,
+    "descripcion": "Restaura puntos de salud",
+    "puntos_curacion": 20
+  },
+  {
+    "id": "med-def27b",
+    "centro_id": "cp-cbbf0a",
+    "categoria": "Medicina",
+    "nombre": "Pocion",
+    "cantidad": 2,
+    "descripcion": "Restaura puntos de salud",
+    "puntos_curacion": 20
   }
 ]
