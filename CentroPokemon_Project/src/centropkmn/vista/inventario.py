@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from centropkmn.vista.comun import Pantalla, crear_tabla, informar, mostrar_error, titulo
+from centropkmn.vista.estilos import PokeBoton
 
 class Inventario(Pantalla):
     def __init__(self, master, controlador):
@@ -17,7 +18,7 @@ class Inventario(Pantalla):
         ttk.Entry(f_med, textvariable=self.m_cant, width=8).grid(row=0, column=3, padx=4)
         ttk.Label(f_med, text="Puntos Curación").grid(row=0, column=4)
         ttk.Entry(f_med, textvariable=self.m_puntos, width=8).grid(row=0, column=5, padx=4)
-        ttk.Button(f_med, text="Registrar en Sede", command=self.reg_medicina).grid(row=0, column=6, padx=8)
+        PokeBoton(f_med, "Registrar en Sede", self.reg_medicina).grid(row=0, column=6, padx=8)
 
         marco, self.tabla = crear_tabla(self, ("id", "categoria", "nombre", "cantidad", "descripcion"), ("ID", "Categoría", "Nombre", "Cantidad Dispon.", "Descripción"), (80, 120, 160, 120, 300))
         marco.pack(fill="both", expand=True)

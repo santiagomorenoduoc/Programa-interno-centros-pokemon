@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from centropkmn.vista.comun import Pantalla, crear_tabla, informar, mostrar_error, titulo
+from centropkmn.vista.estilos import PokeBoton
 
 class Tratamiento(Pantalla):
     def __init__(self, master, controlador):
@@ -14,12 +15,12 @@ class Tratamiento(Pantalla):
         ttk.Label(f_acc, text="Enfermera Joy (Sede):").grid(row=0, column=0, sticky="w")
         self.combo_joy = ttk.Combobox(f_acc, state="readonly")
         self.combo_joy.grid(row=0, column=1, sticky="ew", padx=8)
-        ttk.Button(f_acc, text="Iniciar Triage / Diagnóstico", command=self.diagnosticar).grid(row=0, column=2, padx=8)
+        PokeBoton(f_acc, "Iniciar Triage / Diagnóstico", self.diagnosticar).grid(row=0, column=2, padx=8)
 
         ttk.Label(f_acc, text="Medicina (Almacén Sede):").grid(row=1, column=0, sticky="w", pady=8)
         self.combo_medicina = ttk.Combobox(f_acc, state="readonly")
         self.combo_medicina.grid(row=1, column=1, sticky="ew", padx=8, pady=8)
-        ttk.Button(f_acc, text="Administrar Tratamiento (Gratis)", command=self.tratar).grid(row=1, column=2, padx=8, pady=8)
+        PokeBoton(f_acc, "Administrar Tratamiento (Gratis)", self.tratar).grid(row=1, column=2, padx=8, pady=8)
         f_acc.columnconfigure(1, weight=1)
 
     def refrescar(self) -> None:

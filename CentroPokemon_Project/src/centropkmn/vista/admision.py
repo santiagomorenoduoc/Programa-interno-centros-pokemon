@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from centropkmn.vista.comun import Pantalla, informar, mostrar_error, titulo
+from centropkmn.vista.estilos import PokeBoton
 
 class Admision(Pantalla):
     def __init__(self, master, controlador):
@@ -18,7 +19,7 @@ class Admision(Pantalla):
         ttk.Entry(f_ent, textvariable=self.ent_nombre).grid(row=1, column=1, sticky="ew", padx=4)
         ttk.Label(f_ent, text="Teléfono").grid(row=1, column=2, sticky="w")
         ttk.Entry(f_ent, textvariable=self.ent_tel).grid(row=1, column=3, sticky="ew", padx=4)
-        ttk.Button(f_ent, text="Registrar Entrenador", command=self.reg_entrenador).grid(row=1, column=4, padx=4)
+        PokeBoton(f_ent, "Registrar Entrenador", self.reg_entrenador).grid(row=1, column=4, padx=4)
 
         f_pk = ttk.LabelFrame(self, text="2. Ficha Médica de Admisión del Pokémon (Sede Activa)", padding=12)
         f_pk.pack(fill="x")
@@ -36,7 +37,7 @@ class Admision(Pantalla):
             ttk.Label(f_pk, text=lbl).grid(row=r, column=c, sticky="w", pady=2)
             ttk.Entry(f_pk, textvariable=var).grid(row=r, column=c+1, sticky="ew", padx=4, pady=2)
 
-        ttk.Button(self, text="Admitir Pokémon en Centro Activo (Gratis)", command=self.admitir).pack(anchor="e", pady=12)
+        PokeBoton(self, "Admitir Pokémon en Centro Activo (Gratis)", self.admitir).pack(anchor="e", pady=12)
 
     def refrescar(self) -> None:
         ents = self.controlador.listar_entrenadores()

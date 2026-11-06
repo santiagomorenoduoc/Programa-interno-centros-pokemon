@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from centropkmn.vista.comun import Pantalla, crear_tabla, informar, mostrar_error, titulo
+from centropkmn.vista.estilos import PokeBoton
 
 class PersonalView(Pantalla):
     def __init__(self, master, controlador):
@@ -15,7 +16,7 @@ class PersonalView(Pantalla):
         ttk.Entry(f_p, textvariable=self.p_tel).grid(row=0, column=3, padx=4)
         ttk.Label(f_p, text="Cargo").grid(row=0, column=4)
         ttk.Entry(f_p, textvariable=self.p_cargo).grid(row=0, column=5, padx=4)
-        ttk.Button(f_p, text="Registrar Personal", command=self.reg_personal).grid(row=0, column=6, padx=8)
+        PokeBoton(f_p, "Registrar Personal", self.reg_personal).grid(row=0, column=6, padx=8)
 
         marco, self.tabla = crear_tabla(self, ("id", "nombre", "cargo", "activa"), ("ID", "Nombre", "Cargo", "Estado Disponibilidad"), (100, 200, 160, 140))
         marco.pack(fill="both", expand=True)

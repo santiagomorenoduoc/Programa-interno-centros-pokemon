@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from centropkmn.vista.comun import Pantalla, crear_tabla, informar, mostrar_error, titulo
+from centropkmn.vista.estilos import PokeBoton
 
 class Donaciones(Pantalla):
     def __init__(self, master, controlador):
@@ -14,7 +15,7 @@ class Donaciones(Pantalla):
         ttk.Entry(f_mon, textvariable=self.d_nombre).grid(row=0, column=1, padx=4)
         ttk.Label(f_mon, text="Monto (₽)").grid(row=0, column=2)
         ttk.Entry(f_mon, textvariable=self.d_monto).grid(row=0, column=3, padx=4)
-        ttk.Button(f_mon, text="Donar Pokedólares a la Sede", command=self.donar_monetaria).grid(row=0, column=4, padx=4)
+        PokeBoton(f_mon, "Donar Pokedólares a la Sede", self.donar_monetaria).grid(row=0, column=4, padx=4)
 
         f_obj = ttk.LabelFrame(self, text="2. Donación de Objetos al Almacén de la Sede", padding=12)
         f_obj.pack(fill="x", pady=(0, 12))
@@ -26,7 +27,7 @@ class Donaciones(Pantalla):
         self.combo_prod.grid(row=0, column=3, padx=4)
         ttk.Label(f_obj, text="Cantidad").grid(row=0, column=4)
         ttk.Entry(f_obj, textvariable=self.do_cant, width=6).grid(row=0, column=5, padx=4)
-        ttk.Button(f_obj, text="Donar Objetos a Sede", command=self.donar_objetos).grid(row=0, column=6, padx=4)
+        PokeBoton(f_obj, "Donar Objetos a Sede", self.donar_objetos).grid(row=0, column=6, padx=4)
 
         marco, self.tabla = crear_tabla(self, ("ref", "tipo", "mensaje"), ("Referencia", "Tipo", "Detalle de la Donación"), (120, 120, 480))
         marco.pack(fill="both", expand=True)

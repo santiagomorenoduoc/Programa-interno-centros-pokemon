@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from centropkmn.vista.comun import Pantalla, crear_tabla, informar, mostrar_error, titulo
+from centropkmn.vista.estilos import PokeBoton
 
 class Seguimiento(Pantalla):
     def __init__(self, master, controlador):
@@ -11,8 +12,8 @@ class Seguimiento(Pantalla):
 
         f_acc = ttk.Frame(self)
         f_acc.pack(fill="x")
-        ttk.Button(f_acc, text="Dar de Alta Médica (Entregar a Entrenador)", command=self.alta).pack(side="left", padx=4)
-        ttk.Button(f_acc, text="Cancelar Atención Médica", command=self.cancelar).pack(side="left", padx=4)
+        PokeBoton(f_acc, "Dar de Alta Médica (Entregar a Entrenador)", self.alta).pack(side="left", padx=4)
+        PokeBoton(f_acc, "Cancelar Atención Médica", self.cancelar).pack(side="left", padx=4)
 
     def refrescar(self) -> None:
         cid = self.controlador.centro_activo_id
