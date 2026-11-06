@@ -19,5 +19,26 @@
     "telefono": "+56933333333",
     "correo": "brock@pewter.gym",
     "licencia_oficial": true
+  },
+  {
+    "id": "ent-1f4568",
+    "nombre": "Gary",
+    "telefono": "+56945345600",
+    "correo": "entrenador@pokedex.com",
+    "licencia_oficial": true
+  },
+  {
+    "id": "ent-ce2e90",
+    "nombre": "Rojo",
+    "telefono": "+5690009554",
+    "correo": "entrenador@pokedex.com",
+    "licencia_oficial": true
+  },
+  {
+    "id": "ent-155cdf",
+    "nombre": "Sabrina",
+    "telefono": "+56943322315",
+    "correo": "sabrinagym@pkm.com",
+    "licencia_oficial": true
   }
 ]

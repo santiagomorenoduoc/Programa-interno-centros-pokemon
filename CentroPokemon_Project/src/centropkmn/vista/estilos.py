@@ -6,7 +6,7 @@ import sys
 FONDO = "#f6f4ef"
 TARJETA = "#ffffff"
 TINTA = "#1c1917"
-TINTA_SUAVE = "#57534e"
+TINTA_SUAVE = "#78716c"
 LINEA = "#e4dfd6"
 OSCURO = "#1c1917"
 ACENTO = "#c2410c"
@@ -27,7 +27,6 @@ COLOR_ROJO_BORDE = LINEA
 
 
 def dibujar_pokebola(canvas: tk.Canvas, size: int = 40) -> None:
-    """Dibuja una Poké Ball (rojo/naranja/blanco) centrada dentro del canvas."""
     canvas.delete("all")
     medio = size / 2.0
     canvas.create_oval(1, 1, size - 1, size - 1, fill=ACENTO, outline="#000000", width=1.5)
@@ -46,81 +45,223 @@ def _poligono_redondeado(x0, y0, x1, y1, r):
 
 
 class PokeBoton(tk.Canvas):
-    """Botón redondeado tipo 'pill' al estilo Pokémon (acento / blanco)."""
+    
 
-    def __init__(self, master, texto, comando=None, estilo="primario", activo=False, ancho=150, alto=34):
-        fnt = tkfont.Font(font=(FUENTE, 12, "bold"), master=master)
-        ancho = int(max(ancho, fnt.measure(texto) + 48))
-        super().__init__(master, width=ancho, height=alto, highlightthickness=0, bd=0)
+    def __init__(self, master, texto, comando=None, estilo="primario",
+                 activo=False, ancho=150, alto=34):
+
+        fnt = tkfont.Font(font=(FUENTE, 10, "bold"), master=master)
+        ancho = max(ancho, fnt.measure(texto) + 32)
+
+        self._estilo = estilo
+        self._fondo_canvas = (
+            OSCURO if estilo == "nav"
+            else TARJETA if estilo == "secundario"
+            else FONDO
+        )
+
+        super().__init__(
+            master,
+            width=ancho,
+            height=alto,
+            highlightthickness=0,
+            bd=0,
+            bg=self._fondo_canvas,
+            cursor="hand2"
+        )
+
         self._texto = texto
         self._comando = comando
-        self._estilo = estilo
         self._activo = activo
         self._hover = False
-        self._redibujar()
+        self._ultimo_tamano = (0, 0)
+
+        
+        self.bind("<Configure>", self._al_redimensionar)
         self.bind("<Button-1>", lambda e: self._ejecutar())
         self.bind("<Enter>", lambda e: self._set_hover(True))
         self.bind("<Leave>", lambda e: self._set_hover(False))
 
     def _config(self):
         if self._activo:
-            return {"fondo": ACENTO, "borde": ACENTO_ACTIVO, "texto": BLANCO, "hover": ACENTO_ACTIVO}
-        if self._estilo == "nav":
-            return {"fondo": OSCURO, "borde": OSCURO, "texto": "#f5f5f4", "hover": "#44403c"}
-        if self._estilo == "secundario":
-            return {"fondo": TARJETA, "borde": LINEA, "texto": TINTA_SUAVE, "hover": LINEA}
-        return {"fondo": ACENTO, "borde": ACENTO_ACTIVO, "texto": BLANCO, "hover": ACENTO_ACTIVO}
+            return {
+                "fondo": ACENTO,
+                "borde": ACENTO_ACTIVO,
+                "texto": BLANCO,
+                "hover": ACENTO_ACTIVO
+            }
 
-    def _set_hover(self, valor: bool) -> None:
+        if self._estilo == "nav":
+            return {
+                "fondo": OSCURO,
+                "borde": OSCURO,
+                "texto": "#f5f5f4",
+                "hover": "#44403c"
+            }
+
+        if self._estilo == "secundario":
+            return {
+                "fondo": TARJETA,
+                "borde": LINEA,
+                "texto": TINTA,
+                "hover": "#f5f5f4"
+            }
+
+        return {
+            "fondo": ACENTO,
+            "borde": ACENTO_ACTIVO,
+            "texto": BLANCO,
+            "hover": ACENTO_ACTIVO
+        }
+
+    def _al_redimensionar(self, event):
+        tamano = (event.width, event.height)
+
+        if tamano != self._ultimo_tamano:
+            self._ultimo_tamano = tamano
+            self._redibujar(event.width, event.height)
+
+    def _set_hover(self, valor):
         self._hover = valor
         self._redibujar()
 
-    def _ejecutar(self) -> None:
+    def _ejecutar(self):
         if callable(self._comando):
             self._comando()
 
-    def set_activo(self, valor: bool) -> None:
+    def set_activo(self, valor):
         self._activo = valor
         self._redibujar()
 
-    def _redibujar(self) -> None:
+    def _redibujar(self, ancho=None, alto=None):
         self.delete("all")
+
+        w = ancho if ancho is not None else self.winfo_width()
+        h = alto if alto is not None else self.winfo_height()
+
+        
+        if w <= 1 or h <= 1:
+            return
+
         cfg = self._config()
-        fondo = cfg["hover"] if (self._hover and not self._activo) else cfg["fondo"]
-        w, h = self.winfo_width(), self.winfo_height()
-        r = max(3, int((h - 2) / 2))
-        self.create_polygon(_poligono_redondeado(0, 0, w, h, r), fill=fondo, outline=cfg["borde"], width=2)
-        self.create_text(w / 2, h / 2, text=self._texto, font=(FUENTE, 12, "bold"), fill=cfg["texto"], anchor="center")
+        fondo = cfg["hover"] if self._hover and not self._activo else cfg["fondo"]
+
+        r = min(max(3, int((h - 2) / 2)), w // 2)
+
+        self.create_polygon(
+            _poligono_redondeado(1, 1, w - 1, h - 1, r),
+            fill=fondo,
+            outline=cfg["borde"],
+            width=1
+        )
+
+        fuente = (FUENTE, 10 if self._estilo == "nav" else 11, "bold")
+
+        self.create_text(
+            w / 2,
+            h / 2,
+            text=self._texto,
+            font=fuente,
+            fill=cfg["texto"],
+            anchor="center"
+        )
 
 
 class Tarjeta(tk.Canvas):
-    """Tarjeta blanca con borde redondeado y borde de acento; opcionalmente con Poké Ball e icono."""
+    
 
-    def __init__(self, master, ancho=300, alto=100, texto=None, icono=False, comando=None):
-        super().__init__(master, width=ancho, height=alto, highlightthickness=0, bd=0, bg=TARJETA)
+    def __init__(self, master, ancho=300, alto=100,
+                 texto=None, icono=False, comando=None):
+
+        super().__init__(
+            master,
+            width=ancho,
+            height=alto,
+            highlightthickness=0,
+            bd=0,
+            bg=TARJETA,
+            cursor="hand2" if comando else "arrow"
+        )
+
         self._texto = texto
         self._icono = icono
         self._comando = comando
-        self._redibujar()
+        self._ultimo_tamano = (0, 0)
+
+        self.bind("<Configure>", self._al_redimensionar)
         self.bind("<Button-1>", lambda e: self._ejecutar())
 
-    def _redibujar(self) -> None:
+    def _al_redimensionar(self, event):
+        tamano = (event.width, event.height)
+
+        if tamano != self._ultimo_tamano:
+            self._ultimo_tamano = tamano
+            self._redibujar(event.width, event.height)
+
+    def _redibujar(self, ancho=None, alto=None):
         self.delete("all")
-        w, h = self.winfo_width(), self.winfo_height()
-        r = max(6, int((h - 6) / 2))
-        self.create_polygon(_poligono_redondeado(0, 0, w, h, r), fill=TARJETA, outline=ACENTO, width=2)
+
+        w = ancho if ancho is not None else self.winfo_width()
+        h = alto if alto is not None else self.winfo_height()
+
+        if w <= 1 or h <= 1:
+            return
+
+        r = min(max(6, int((h - 6) / 2)), w // 2)
+
+        self.create_polygon(
+            _poligono_redondeado(2, 2, w - 2, h - 2, r),
+            fill=TARJETA,
+            outline=ACENTO,
+            width=2
+        )
+
         if self._icono and self._texto:
             size = int(min(w, h) * 0.34)
-            dibujar_pokebola(self, size)
-            self.create_text(w / 2, h / 2 + size * 0.55, text=self._texto, font=(FUENTE, 10, "bold"), fill=ACENTO, anchor="center")
+            cx = w / 2
+            cy = h * 0.35
+            radio = size / 2
 
-    def _ejecutar(self) -> None:
+        
+            self.create_oval(
+                cx - radio, cy - radio,
+                cx + radio, cy + radio,
+                fill=ACENTO,
+                outline="#000000",
+                width=1
+            )
+
+            self.create_line(
+                cx - radio, cy,
+                cx + radio, cy,
+                fill=BLANCO,
+                width=max(2, int(size * 0.30))
+            )
+
+            rb = size * 0.14
+
+            self.create_oval(
+                cx - rb, cy - rb,
+                cx + rb, cy + rb,
+                fill="#111111"
+            )
+
+            self.create_text(
+                cx,
+                cy + radio + 12,
+                text=self._texto,
+                font=(FUENTE, 10, "bold"),
+                fill=ACENTO,
+                anchor="center"
+            )
+
+    def _ejecutar(self):
         if callable(self._comando):
             self._comando()
 
 
+
 def registrar_estilos(root) -> ttk.Style:
-    """Registra los estilos ttk del tema FlashFood / Pokémon moderno (crema + naranja)."""
     style = ttk.Style(root)
     style.theme_use("clam")
     style.configure("TFrame", background=FONDO, borderwidth=0)
@@ -200,15 +341,23 @@ def registrar_estilos(root) -> ttk.Style:
     )
     style.configure(
         "ComboNav.TCombobox",
-        background=OSCURO,
-        fieldbackground=OSCURO,
-        foreground="#f5f5f4",
+        fieldbackground="#1c1917",
+        background="#1c1917",
+        foreground="#ffffff",
+        arrowcolor="#ffffff",
+        bordercolor="#44403c",
+        lightcolor="#1c1917",
+        darkcolor="#1c1917",
         padding=5,
     )
     style.map(
         "ComboNav.TCombobox",
+        fieldbackground=[("readonly", "#1c1917")],
         background=[("readonly", OSCURO), ("active", OSCURO)],
         foreground=[("readonly", "#f5f5f4"), ("active", "#f5f5f4")],
+        selectbackground=[("readonly", "#1c1917")],
+        selectforeground=[("readonly", "#ffffff")]
+
     )
     style.configure(
         "Treeview",
@@ -235,9 +384,8 @@ def registrar_estilos(root) -> ttk.Style:
 
 
 def activar_dpi() -> None:
-    """En Windows, usa los píxeles reales de la pantalla antes de crear la ventana."""
     if sys.platform != "win32":
-        return
+         return
     try:
         import ctypes
 

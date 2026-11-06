@@ -45,6 +45,7 @@ class Aplicacion(tk.Tk):
 
         self._navegacion = tk.Frame(cuerpo, bg=OSCURO, width=208)
         self._navegacion.pack(side="left", fill="y")
+        self._navegacion.pack_propagate(False)
 
         bola = tk.Canvas(self._navegacion, width=48, height=48, highlightthickness=0, bg=OSCURO)
         dibujar_pokebola(bola, 44)

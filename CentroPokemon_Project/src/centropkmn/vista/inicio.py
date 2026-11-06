@@ -36,3 +36,4 @@ class Inicio(Pantalla):
         for e_lbl, cant in datos["estados"].items():
             lineas.append(f"  • {e_lbl}: {cant}")
         self.resumen.configure(text="\n".join(lineas))
+

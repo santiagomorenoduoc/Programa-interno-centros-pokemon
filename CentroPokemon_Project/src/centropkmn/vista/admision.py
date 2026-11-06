@@ -19,6 +19,8 @@ class Admision(Pantalla):
         ttk.Entry(f_ent, textvariable=self.ent_nombre).grid(row=1, column=1, sticky="ew", padx=4)
         ttk.Label(f_ent, text="Teléfono").grid(row=1, column=2, sticky="w")
         ttk.Entry(f_ent, textvariable=self.ent_tel).grid(row=1, column=3, sticky="ew", padx=4)
+        ttk.Label(f_ent, text="Correo electrónico").grid(row=2, column=0, sticky="w", pady=(8, 2))
+        ttk.Entry(f_ent, textvariable=self.ent_correo).grid(row=2, column=1, sticky="ew", padx=4, pady=(0, 8))
         PokeBoton(f_ent, "Registrar Entrenador", self.reg_entrenador).grid(row=1, column=4, padx=4)
 
         f_pk = ttk.LabelFrame(self, text="2. Ficha Médica de Admisión del Pokémon (Sede Activa)", padding=12)
@@ -47,7 +49,7 @@ class Admision(Pantalla):
 
     def reg_entrenador(self) -> None:
         try:
-            ent = self.controlador.registrar_entrenador(self.ent_nombre.get(), self.ent_tel.get(), "entrenador@pokedex.com", self.ent_licencia.get())
+            ent = self.controlador.registrar_entrenador(self.ent_nombre.get(), self.ent_tel.get(), self.ent_correo.get(), self.ent_licencia.get())
             informar(self, "Entrenador Registrado", f"Entrenador {ent.nombre} registrado con ID: {ent.id}")
             self.refrescar(); self.ent_id.set(f"{ent.id} - {ent.nombre}")
         except Exception as e: mostrar_error(self, str(e))
