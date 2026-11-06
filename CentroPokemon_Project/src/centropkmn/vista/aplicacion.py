@@ -56,6 +56,7 @@ class Aplicacion(tk.Tk):
         ttk.Label(self._navegacion, text="Sede Activa:", font=(FUENTE, 10, "bold"), foreground="#f5f5f4", background=OSCURO).pack(anchor="w", padx=14)
         self.combo_centro = ttk.Combobox(self._navegacion, state="readonly", style="ComboNav.TCombobox")
         self.combo_centro.pack(fill="x", padx=14, pady=(2, 10))
+        self.combo_centro.bind("<<ComboboxSelected>>", self._al_cambiar_centro)
         PokeBoton(self._navegacion, "+ Nueva Sede", self._crear_nueva_sede, estilo="nav", ancho=180, alto=34).pack(fill="x", padx=14, pady=(0, 12))
         ttk.Separator(self._navegacion, orient="horizontal").pack(fill="x", padx=14)
 
