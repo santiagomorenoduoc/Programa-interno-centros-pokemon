@@ -11,12 +11,23 @@ class ResultadoDonacion:
     centro_id: str
     tipo: str
     mensaje: str
+    # Datos opcionales: van a donaciones / donacion_monetarias / donacion_objetos en MySQL.
+    donante_nombre: str | None = None
+    monto: int | None = None
+    medio: str | None = None
+    producto_id: str | None = None
+    cantidad: int | None = None
 
     def a_diccionario(self) -> dict:
-        return {
+        datos = {
             "exitosa": self.exitosa, "referencia": self.referencia,
             "centro_id": self.centro_id, "tipo": self.tipo, "mensaje": self.mensaje
         }
+        for campo in ("donante_nombre", "monto", "medio", "producto_id", "cantidad"):
+            valor = getattr(self, campo)
+            if valor is not None:
+                datos[campo] = valor
+        return datos
 
 class Donacion(ABC):
     def __init__(self, id: str, centro_id: str, donante_nombre: str):
@@ -52,7 +63,10 @@ class DonacionMonetaria(Donacion):
         centro_sede.agregar_fondos(self._monto)
         ref = f"DON-MON-{uuid4().hex[:6].upper()}"
         msg = f"Aporte voluntario de ₽{self._monto:,} recibido para {centro_sede.nombre} vía {self._medio}. ¡Gracias {self._donante_nombre}!"
-        return ResultadoDonacion(True, ref, self._centro_id, self.tipo, msg)
+        return ResultadoDonacion(
+            True, ref, self._centro_id, self.tipo, msg,
+            donante_nombre=self._donante_nombre, monto=self._monto, medio=self._medio,
+        )
 
 class DonacionObjetos(Donacion):
     def __init__(self, id: str, centro_id: str, donante_nombre: str, producto_id: str, cantidad: int):
@@ -69,4 +83,7 @@ class DonacionObjetos(Donacion):
         centro_sede = centro_gestor.obtener_centro(self._centro_id)
         ref = f"DON-OBJ-{uuid4().hex[:6].upper()}"
         msg = f"Ingresadas {self._cantidad} unidades de {producto.nombre} al inventario de {centro_sede.nombre}. Donado por {self._donante_nombre}."
-        return ResultadoDonacion(True, ref, self._centro_id, self.tipo, msg)
+        return ResultadoDonacion(
+            True, ref, self._centro_id, self.tipo, msg,
+            donante_nombre=self._donante_nombre, producto_id=self._producto_id, cantidad=self._cantidad,
+        )

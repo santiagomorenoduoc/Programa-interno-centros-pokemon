@@ -5,12 +5,12 @@ from centropkmn.modelo.persona import Entrenador, Personal
 from centropkmn.modelo.producto import Medicina, Producto, producto_desde_diccionario
 from centropkmn.modelo.donacion import DonacionMonetaria, DonacionObjetos, ResultadoDonacion
 from centropkmn.modelo.pokemon import EstadoPokemon, Pokemon
-from centropkmn.persistencia.repositorio_json import RepositorioJSON
+from centropkmn.persistencia.repositorio import Repositorio
 from centropkmn.modelo.validaciones import *
 
 class CentroPokemon:
     """Sistema gestor central multi-sede para Centros Pokémon."""
-    def __init__(self, repositorio: RepositorioJSON):
+    def __init__(self, repositorio: Repositorio):
         self._repositorio = repositorio
         self._centros: dict[str, CentroSede] = {}
         self._pokemones: dict[str, Pokemon] = {}
@@ -33,6 +33,10 @@ class CentroPokemon:
     def advertencias(self) -> tuple[str, ...]: return tuple(self._repositorio.advertencias)
 
     def cargar(self) -> None:
+        with self._repositorio.transaccion():
+            self._cargar_colecciones()
+
+    def _cargar_colecciones(self) -> None:
         self._centros.clear(); self._pokemones.clear(); self._entrenadores.clear()
         self._personal.clear(); self._productos.clear(); self._donaciones.clear()
 
@@ -53,6 +57,11 @@ class CentroPokemon:
         self._donaciones = self._repositorio.cargar_lista("donaciones")
 
     def guardar(self) -> None:
+        """Guarda todo o nada: con MySQL las seis colecciones van en una sola transacción."""
+        with self._repositorio.transaccion():
+            self._guardar_colecciones()
+
+    def _guardar_colecciones(self) -> None:
         self._repositorio.guardar("centros", [item.a_diccionario() for item in self._centros.values()])
         self._repositorio.guardar("entrenadores", [item.a_diccionario() for item in self._entrenadores.values()])
         self._repositorio.guardar("personal", [item.a_diccionario() for item in self._personal.values()])

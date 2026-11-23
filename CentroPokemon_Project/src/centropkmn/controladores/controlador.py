@@ -1,8 +1,10 @@
 from pathlib import Path
 from centropkmn.modelo.centro import CentroPokemon
 from centropkmn.modelo.pokemon import EstadoPokemon
+from centropkmn.persistencia.configuracion import leer_configuracion
 from centropkmn.persistencia.repositorio_json import RepositorioJSON
-from centropkmn.rutas import directorio_datos
+from centropkmn.persistencia.repositorio_mysql import RepositorioMySQL
+from centropkmn.rutas import directorio_datos, ruta_configuracion
 from centropkmn.modelo.producto import Producto
 
 
@@ -12,7 +14,25 @@ class Controlador:
     self._directorio = (
         Path(directorio) if directorio is not None else directorio_datos()
     )
-    self._centro = CentroPokemon(RepositorioJSON(self._directorio))
+    self._repositorio = self._crear_repositorio(directorio)
+    self._centro = CentroPokemon(self._repositorio)
+
+  def _crear_repositorio(self, directorio):
+    """MySQL si configuracion.ini lo pide; JSON en cualquier otro caso.
+
+    Con una carpeta explícita (demo, pruebas) se usa siempre JSON.
+    """
+    if directorio is None:
+      configuracion = leer_configuracion(ruta_configuracion())
+      if configuracion.motor == "mysql":
+        repositorio = RepositorioMySQL(configuracion.mysql)
+        repositorio.probar()  # falla pronto y con un mensaje claro
+        return repositorio
+    return RepositorioJSON(self._directorio)
+
+  @property
+  def origen_datos(self) -> str:
+    return self._repositorio.descripcion
 
   @property
   def directorio(self) -> Path:

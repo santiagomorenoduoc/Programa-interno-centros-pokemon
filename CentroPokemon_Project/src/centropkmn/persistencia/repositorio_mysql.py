@@ -1,55 +1,345 @@
-"""Lectura y escritura en MySQL, con el mismo contrato que el repositorio JSON.
+"""Persistencia en MySQL, con el mismo contrato que RepositorioJSON.
 
-Las tablas se crean con database/01_esquema.sql. Aquí solo hay SQL: las reglas viven en el modelo.
+Las tablas se crean con database/01_esquema.sql (MySQL Workbench). Aquí solo hay SQL:
+las reglas de negocio viven en el modelo, que sigue recibiendo y entregando los mismos
+diccionarios que con JSON.
 """
 
+import copy
 from contextlib import contextmanager
 
-from configuracion import ConfiguracionMySQL
-from modelo.errores import PersistenciaError
-from repositorio import Repositorio
+from centropkmn.modelo.errores import PersistenciaError
+from centropkmn.persistencia.configuracion import ConfiguracionMySQL
+from centropkmn.persistencia.repositorio import Repositorio
 
 try:
     import mysql.connector as conector
 except ImportError:  # el conector solo hace falta si se usa MySQL
     conector = None
 
-_TABLAS = (
+TABLAS = (
     "centros",
-    "donaciones",
-    "donaciones_monetarias",
-    "donaciones_objetos",
-    "entrenadores",
-    "historial_estados_pokemon",
-    "insumos_captura",
-    "medicinas",
-    "personal",
     "personas",
+    "entrenadores",
+    "personal",
+    "productos",
+    "medicinas",
+    "insumos_captura",
     "pokemones",
-    "productos"
+    "historial_estados_pokemon",
+    "donaciones",
+    "donacion_monetarias",
+    "donacion_objetos",
 )
-_COLUMNAS = {
-    "centros": ("id_centro", "nombre", "ubicacion", "fondos", "activo", "fecha_creacion"),
-    "personas": ("id_persona", "nombre", "telefono", "correo", "tipo_persona", "fecha_registro"),
-    "entrenadores": ("id_persona", "licencia_oficial"),
-    "personal": ("id_persona1", "id_centro", "cargo", "activa"),
-    "productos": ("id_producto", "id_centro", "nombre", "cantidad", "descripcion", "categoria", "fecha_creacion"),
-    "medicinas": ("id_producto", "puntos_curacion"),
-    "insumos_captura": ("id_producto", "ratio_captura"),
-    "pokemons": ("id_pokemon", "id_centro", "id_entrenador", "id_enfermera", "id_medicina_usada", "nombre", "especie", "tipo", "nivel", "hp_actual", "hp_maximo", "pokebola", "sintomas", "estado", "fecha_ingreso"),
-    "historial_estados_pokemon": ("id_historial", "id_pokemon", "estado", "fecha_cambio"),
-    "donaciones": ("id_donacion", "id_centro", "donante_nombre", "tipo", "referencia", "exitosa", "mensaje", "fecha_donacion"),
-    "donacion_monetarias": ("id_donacion", "monto", "medio"),
-    "donacion_objetos": ("id_donacion", "id_producto", "cantidad")
+# Campo que identifica cada registro dentro del diccionario de su colección.
+_CLAVES = {
+    "centros": "id",
+    "entrenadores": "id",
+    "personal": "id",
+    "productos": "id",
+    "pokemones": "id",
+    "donaciones": "referencia",
 }
+
 _SIN_CONEXION = {2002, 2003, 2005, 2006, 2013, 2055}
 _ACCESO_DENEGADO = 1045
 _SIN_BASE = {1044, 1049}
 _SIN_TABLA = 1146
+_DUPLICADO = 1062
 _REFERENCIA = {1451, 1452}
 _DATO_EXCEDIDO = {1264, 1406}
-# Los borrados van al final y de hijos a padres, para respetar las llaves foráneas.
-_ORDEN_DE_BORRADO = ("pedidos", "repartidores", "clientes", "productos")
+
+
+def _valor(valor):
+    return int(valor) if isinstance(valor, bool) else valor
+
+
+def _upsert(cursor, tabla: str, columnas: tuple, valores: tuple) -> None:
+    """INSERT que actualiza si la clave primaria (primera columna) ya existe."""
+    marcas = ", ".join(["%s"] * len(columnas))
+    actualiza = ", ".join(f"{c} = VALUES({c})" for c in columnas[1:])
+    cursor.execute(
+        f"INSERT INTO {tabla} ({', '.join(columnas)}) VALUES ({marcas}) "
+        f"ON DUPLICATE KEY UPDATE {actualiza}",
+        tuple(_valor(v) for v in valores),
+    )
+
+
+# --- lectura: fila de MySQL -> diccionario con la forma que espera el modelo ----------------
+
+def _leer_centros(cursor) -> list[dict]:
+    cursor.execute(
+        "SELECT id_centro, nombre, ubicacion, fondos, activo "
+        "FROM centros ORDER BY fecha_creacion, id_centro"
+    )
+    return [
+        {
+            "id": f["id_centro"],
+            "nombre": f["nombre"],
+            "ubicacion": f["ubicacion"],
+            "fondos": int(f["fondos"]),
+            "activo": bool(f["activo"]),  # el modelo exige bool, MySQL entrega 0/1
+        }
+        for f in cursor.fetchall()
+    ]
+
+
+def _leer_entrenadores(cursor) -> list[dict]:
+    cursor.execute(
+        "SELECT p.id_persona, p.nombre, p.telefono, p.correo, e.licencia_oficial "
+        "FROM personas p JOIN entrenadores e ON e.id_persona = p.id_persona "
+        "ORDER BY p.fecha_registro, p.id_persona"
+    )
+    return [
+        {
+            "id": f["id_persona"],
+            "nombre": f["nombre"],
+            "telefono": f["telefono"],
+            "correo": f["correo"],
+            "licencia_oficial": bool(f["licencia_oficial"]),
+        }
+        for f in cursor.fetchall()
+    ]
+
+
+def _leer_personal(cursor) -> list[dict]:
+    cursor.execute(
+        "SELECT p.id_persona, pe.id_centro, p.nombre, p.telefono, p.correo, pe.cargo, pe.activa "
+        "FROM personas p JOIN personal pe ON pe.id_persona = p.id_persona "
+        "ORDER BY p.fecha_registro, p.id_persona"
+    )
+    return [
+        {
+            "id": f["id_persona"],
+            "centro_id": f["id_centro"],
+            "nombre": f["nombre"],
+            "telefono": f["telefono"],
+            "correo": f["correo"],
+            "cargo": f["cargo"],
+            "activa": bool(f["activa"]),
+        }
+        for f in cursor.fetchall()
+    ]
+
+
+def _leer_productos(cursor) -> list[dict]:
+    cursor.execute(
+        "SELECT pr.id_producto, pr.id_centro, pr.categoria, pr.nombre, pr.cantidad, pr.descripcion, "
+        "m.puntos_curacion, ic.ratio_captura "
+        "FROM productos pr "
+        "LEFT JOIN medicinas m ON m.id_producto = pr.id_producto "
+        "LEFT JOIN insumos_captura ic ON ic.id_producto = pr.id_producto "
+        "ORDER BY pr.fecha_creacion, pr.id_producto"
+    )
+    productos = []
+    for f in cursor.fetchall():
+        item = {
+            "id": f["id_producto"],
+            "centro_id": f["id_centro"],
+            "categoria": f["categoria"],
+            "nombre": f["nombre"],
+            "cantidad": int(f["cantidad"]),
+            "descripcion": f["descripcion"],
+        }
+        # Cada categoría trae solo su dato propio, igual que Producto.a_diccionario().
+        if f["categoria"] == "Medicina" and f["puntos_curacion"] is not None:
+            item["puntos_curacion"] = int(f["puntos_curacion"])
+        elif f["categoria"] == "Pokébola/Captura" and f["ratio_captura"] is not None:
+            item["ratio_captura"] = float(f["ratio_captura"])
+        productos.append(item)
+    return productos
+
+
+def _leer_pokemones(cursor) -> list[dict]:
+    cursor.execute(
+        "SELECT id_pokemon, estado FROM historial_estados_pokemon ORDER BY id_pokemon, id_historial"
+    )
+    historial: dict[str, list[str]] = {}
+    for f in cursor.fetchall():
+        historial.setdefault(f["id_pokemon"], []).append(f["estado"])
+    cursor.execute(
+        "SELECT id_pokemon, id_centro, id_entrenador, id_enfermera, id_medicina_usada, nombre, "
+        "especie, tipo, nivel, hp_actual, hp_maximo, pokebola, sintomas, estado "
+        "FROM pokemones ORDER BY fecha_ingreso, id_pokemon"
+    )
+    return [
+        {
+            "id": f["id_pokemon"],
+            "centro_id": f["id_centro"],
+            "nombre": f["nombre"],
+            "especie": f["especie"],
+            "tipo": f["tipo"],
+            "nivel": int(f["nivel"]),
+            "hp_actual": int(f["hp_actual"]),
+            "hp_maximo": int(f["hp_maximo"]),
+            "pokebola": f["pokebola"],
+            "sintomas": f["sintomas"],
+            "entrenador_id": f["id_entrenador"],
+            "enfermera_id": f["id_enfermera"],
+            "medicina_usada_id": f["id_medicina_usada"],
+            "estado": f["estado"],
+            "historial": historial.get(f["id_pokemon"], [f["estado"]]),
+        }
+        for f in cursor.fetchall()
+    ]
+
+
+def _leer_donaciones(cursor) -> list[dict]:
+    cursor.execute(
+        "SELECT d.referencia, d.id_centro, d.donante_nombre, d.tipo, d.exitosa, d.mensaje, "
+        "dm.monto, dm.medio, dob.id_producto, dob.cantidad "
+        "FROM donaciones d "
+        "LEFT JOIN donacion_monetarias dm ON dm.id_donacion = d.id_donacion "
+        "LEFT JOIN donacion_objetos dob ON dob.id_donacion = d.id_donacion "
+        "ORDER BY d.fecha_donacion, d.id_donacion"
+    )
+    donaciones = []
+    for f in cursor.fetchall():
+        item = {
+            "exitosa": bool(f["exitosa"]),
+            "referencia": f["referencia"],
+            "centro_id": f["id_centro"],
+            "tipo": f["tipo"],
+            "mensaje": f["mensaje"],
+        }
+        # Los datos opcionales solo aparecen si existen (igual que ResultadoDonacion.a_diccionario()).
+        if f["donante_nombre"] is not None:
+            item["donante_nombre"] = f["donante_nombre"]
+        if f["monto"] is not None:
+            item["monto"] = int(f["monto"])
+            item["medio"] = f["medio"]
+        if f["id_producto"] is not None:
+            item["producto_id"] = f["id_producto"]
+            item["cantidad"] = int(f["cantidad"])
+        donaciones.append(item)
+    return donaciones
+
+
+# --- escritura: diccionario del modelo -> filas de MySQL ------------------------------------
+# Cada escritor recibe el registro nuevo y el que había guardado antes (None si es nuevo).
+
+def _escribir_centro(cursor, item: dict, anterior) -> None:
+    _upsert(
+        cursor,
+        "centros",
+        ("id_centro", "nombre", "ubicacion", "fondos", "activo"),
+        (item["id"], item["nombre"], item["ubicacion"], item["fondos"], item["activo"]),
+    )
+
+
+def _escribir_persona(cursor, item: dict, tipo: str) -> None:
+    _upsert(
+        cursor,
+        "personas",
+        ("id_persona", "nombre", "telefono", "correo", "tipo_persona"),
+        (item["id"], item["nombre"], item["telefono"], item["correo"], tipo),
+    )
+
+
+def _escribir_entrenador(cursor, item: dict, anterior) -> None:
+    _escribir_persona(cursor, item, "ENTRENADOR")
+    _upsert(
+        cursor,
+        "entrenadores",
+        ("id_persona", "licencia_oficial"),
+        (item["id"], item["licencia_oficial"]),
+    )
+
+
+def _escribir_personal(cursor, item: dict, anterior) -> None:
+    _escribir_persona(cursor, item, "PERSONAL")
+    _upsert(
+        cursor,
+        "personal",
+        ("id_persona", "id_centro", "cargo", "activa"),
+        (item["id"], item["centro_id"], item["cargo"], item["activa"]),
+    )
+
+
+def _escribir_producto(cursor, item: dict, anterior) -> None:
+    _upsert(
+        cursor,
+        "productos",
+        ("id_producto", "id_centro", "nombre", "cantidad", "descripcion", "categoria"),
+        (item["id"], item["centro_id"], item["nombre"], item["cantidad"], item["descripcion"], item["categoria"]),
+    )
+    if item["categoria"] == "Medicina":
+        _upsert(cursor, "medicinas", ("id_producto", "puntos_curacion"), (item["id"], item["puntos_curacion"]))
+    elif item["categoria"] == "Pokébola/Captura":
+        _upsert(cursor, "insumos_captura", ("id_producto", "ratio_captura"), (item["id"], item["ratio_captura"]))
+    else:
+        raise PersistenciaError(f"Categoría de producto desconocida: {item['categoria']}")
+
+
+def _escribir_pokemon(cursor, item: dict, anterior) -> None:
+    _upsert(
+        cursor,
+        "pokemones",
+        (
+            "id_pokemon", "id_centro", "id_entrenador", "id_enfermera", "id_medicina_usada",
+            "nombre", "especie", "tipo", "nivel", "hp_actual", "hp_maximo", "pokebola",
+            "sintomas", "estado",
+        ),
+        (
+            item["id"], item["centro_id"], item["entrenador_id"], item["enfermera_id"],
+            item["medicina_usada_id"], item["nombre"], item["especie"], item["tipo"],
+            item["nivel"], item["hp_actual"], item["hp_maximo"], item["pokebola"],
+            item["sintomas"], item["estado"],
+        ),
+    )
+    # El historial solo crece: se agregan los estados nuevos y se conservan las fechas ya guardadas.
+    previo = list(anterior["historial"]) if anterior else []
+    nuevo = list(item["historial"])
+    if nuevo[: len(previo)] != previo:  # el historial cambió por dentro: se reescribe completo
+        cursor.execute("DELETE FROM historial_estados_pokemon WHERE id_pokemon = %s", (item["id"],))
+        previo = []
+    for estado in nuevo[len(previo):]:
+        cursor.execute(
+            "INSERT INTO historial_estados_pokemon (id_pokemon, estado) VALUES (%s, %s)",
+            (item["id"], estado),
+        )
+
+
+def _escribir_donacion(cursor, item: dict, anterior) -> None:
+    if anterior is not None:  # una donación registrada no se modifica
+        return
+    cursor.execute(
+        "INSERT INTO donaciones (referencia, id_centro, donante_nombre, tipo, exitosa, mensaje) "
+        "VALUES (%s, %s, %s, %s, %s, %s)",
+        (
+            item["referencia"], item["centro_id"], item.get("donante_nombre"),
+            item["tipo"], int(item["exitosa"]), item["mensaje"],
+        ),
+    )
+    id_donacion = cursor.lastrowid
+    if item.get("monto") is not None:
+        cursor.execute(
+            "INSERT INTO donacion_monetarias (id_donacion, monto, medio) VALUES (%s, %s, %s)",
+            (id_donacion, item["monto"], item["medio"]),
+        )
+    if item.get("producto_id") is not None:
+        cursor.execute(
+            "INSERT INTO donacion_objetos (id_donacion, id_producto, cantidad) VALUES (%s, %s, %s)",
+            (id_donacion, item["producto_id"], item["cantidad"]),
+        )
+
+
+_LECTORES = {
+    "centros": _leer_centros,
+    "entrenadores": _leer_entrenadores,
+    "personal": _leer_personal,
+    "productos": _leer_productos,
+    "pokemones": _leer_pokemones,
+    "donaciones": _leer_donaciones,
+}
+_ESCRITORES = {
+    "centros": _escribir_centro,
+    "entrenadores": _escribir_entrenador,
+    "personal": _escribir_personal,
+    "productos": _escribir_producto,
+    "pokemones": _escribir_pokemon,
+    "donaciones": _escribir_donacion,
+}
 
 
 class RepositorioMySQL(Repositorio):
@@ -64,7 +354,6 @@ class RepositorioMySQL(Repositorio):
         # Último estado conocido de cada colección: permite escribir solo lo que cambió.
         self._guardado: dict[str, dict[str, dict]] = {}
         self._pendiente: dict[str, dict[str, dict]] = {}
-        self._por_eliminar: dict[str, list[str]] = {}
 
     @property
     def descripcion(self) -> str:
@@ -73,12 +362,13 @@ class RepositorioMySQL(Repositorio):
 
     def probar(self) -> str:
         """Comprueba la conexión y que existan las tablas. Devuelve la versión del servidor."""
-        with self._cursor() as cursor:
-            for tabla in _TABLAS:
-                cursor.execute(f"SELECT 1 FROM {tabla} LIMIT 1")
-                cursor.fetchall()
-            cursor.execute("SELECT VERSION() AS version")
-            return str(cursor.fetchone()["version"])
+        with self.transaccion():
+            with self._cursor() as cursor:
+                for tabla in TABLAS:
+                    cursor.execute(f"SELECT 1 FROM {tabla} LIMIT 1")
+                    cursor.fetchall()
+                cursor.execute("SELECT VERSION() AS version")
+                return str(cursor.fetchone()["version"])
 
     @contextmanager
     def transaccion(self):
@@ -89,10 +379,8 @@ class RepositorioMySQL(Repositorio):
         conexion = self._conectar()
         self._conexion = conexion
         self._pendiente = {}
-        self._por_eliminar = {}
         try:
             yield self
-            self._eliminar_pendientes(conexion)
             conexion.commit()
             self._guardado.update(self._pendiente)
         except conector.Error as error:
@@ -104,191 +392,41 @@ class RepositorioMySQL(Repositorio):
         finally:
             self._conexion = None
             self._pendiente = {}
-            self._por_eliminar = {}
             self._cerrar(conexion)
 
     def cargar_lista(self, nombre: str) -> list:
-        lectores = {
-            "productos": self._leer_productos,
-            "clientes": self._leer_clientes,
-            "pokemones": self._leer_,
-            "pedidos": self._leer_pedidos,
-        }
-        if nombre not in lectores:
+        lector = _LECTORES.get(nombre)
+        if lector is None:
             raise PersistenciaError(f"MySQL no tiene una colección llamada {nombre}")
-        with self._cursor() as cursor:
-            datos = lectores[nombre](cursor)
-            self._pendiente[nombre] = {item["id"]: item for item in datos}
-        return [self._copia(item) for item in datos]
-
-    def recordar(self, nombre: str, datos: list) -> None:
-        """Solo se comparan (y se pueden borrar) las filas que el modelo aceptó; las omitidas no se tocan."""
-        aceptados = {item["id"]: self._copia(item) for item in datos}
-        if self._conexion is None:
-            self._guardado[nombre] = aceptados
-        else:
-            self._pendiente[nombre] = aceptados
+        with self.transaccion():
+            with self._cursor() as cursor:
+                datos = lector(cursor)
+            self._pendiente[nombre] = {item[_CLAVES[nombre]]: copy.deepcopy(item) for item in datos}
+        return datos
 
     def cargar_objeto(self, nombre: str) -> dict:
-        if nombre != "operacion":
-            raise PersistenciaError(f"MySQL no tiene un objeto llamado {nombre}")
-        with self._cursor() as cursor:
-            cursor.execute("SELECT hora_punta, lluvia FROM operacion WHERE id = 1")
-            fila = cursor.fetchone()
-        if fila is None:
-            return {}
-        return {"hora_punta": bool(fila["hora_punta"]), "lluvia": bool(fila["lluvia"])}
+        raise PersistenciaError(f"MySQL no tiene un objeto llamado {nombre}")
 
     def guardar(self, nombre: str, datos: list | dict) -> None:
-        with self._cursor() as cursor:
-            if nombre == "operacion":
-                cursor.execute(
-                    "INSERT INTO operacion (id, hora_punta, lluvia) VALUES (1, %s, %s) "
-                    "ON DUPLICATE KEY UPDATE hora_punta = VALUES(hora_punta), lluvia = VALUES(lluvia)",
-                    (int(datos.get("hora_punta") is True), int(datos.get("lluvia") is True)),
-                )
-                return
-            if nombre not in _COLUMNAS:
-                raise PersistenciaError(f"MySQL no tiene una colección llamada {nombre}")
-            actual = {item["id"]: self._copia(item) for item in datos}
+        escritor = _ESCRITORES.get(nombre)
+        if escritor is None:
+            raise PersistenciaError(f"MySQL no tiene una colección llamada {nombre}")
+        clave = _CLAVES[nombre]
+        actual = {item[clave]: copy.deepcopy(item) for item in datos}
+        with self.transaccion():
             previo = self._pendiente.get(nombre, self._guardado.get(nombre, {}))
-            eliminados = [clave for clave in previo if clave not in actual]
-            cambiados = [item for clave, item in actual.items() if previo.get(clave) != item]
-            self._por_eliminar[nombre] = eliminados
+            cambiados = [(item, previo.get(k)) for k, item in actual.items() if previo.get(k) != item]
             if cambiados:
-                self._escribir(cursor, nombre, cambiados)
-                if nombre == "pedidos":
-                    self._escribir_partes_de_pedidos(cursor, cambiados)
+                with self._cursor() as cursor:
+                    for item, anterior in cambiados:
+                        escritor(cursor, item, anterior)
             self._pendiente[nombre] = actual
-
-    # --- lectura -------------------------------------------------------------
-
-    def _leer_productos(self, cursor) -> list[dict]:
-        cursor.execute(
-            "SELECT id, tipo, nombre, precio, stock, categoria, mililitros FROM productos ORDER BY creado_en, id"
-        )
-        productos = []
-        for fila in cursor.fetchall():
-            producto = {clave: fila[clave] for clave in ("id", "tipo", "nombre", "precio", "stock")}
-            if fila["tipo"] == "bebida":
-                producto["mililitros"] = fila["mililitros"]
-            else:
-                producto["categoria"] = fila["categoria"]
-            productos.append(producto)
-        return productos
-
-    def _leer_clientes(self, cursor) -> list[dict]:
-        cursor.execute("SELECT id, nombre, telefono, direccion, es_vip FROM clientes ORDER BY creado_en, id")
-        return [{**fila, "es_vip": bool(fila["es_vip"])} for fila in cursor.fetchall()]
-
-    def _leer_repartidores(self, cursor) -> list[dict]:
-        cursor.execute("SELECT id, nombre, vehiculo FROM repartidores ORDER BY creado_en, id")
-        return [dict(fila) for fila in cursor.fetchall()]
-
-    def _leer_pedidos(self, cursor) -> list[dict]:
-        cursor.execute(
-            "SELECT id, cliente_id, repartidor_id, es_vip, hora_punta, lluvia, estado, "
-            "stock_descontado, stock_restituido FROM pedidos ORDER BY creado_en, id"
-        )
-        pedidos = {}
-        for fila in cursor.fetchall():
-            pedidos[fila["id"]] = {
-                "id": fila["id"],
-                "cliente_id": fila["cliente_id"],
-                "es_vip": bool(fila["es_vip"]),
-                "hora_punta": bool(fila["hora_punta"]),
-                "lluvia": bool(fila["lluvia"]),
-                "estado": fila["estado"],
-                "historial": [],
-                "repartidor_id": fila["repartidor_id"],
-                "stock_descontado": bool(fila["stock_descontado"]),
-                "stock_restituido": bool(fila["stock_restituido"]),
-                "pago": None,
-                "detalles": [],
-            }
-        cursor.execute(
-            "SELECT pedido_id, producto_id, nombre, precio_unitario, cantidad "
-            "FROM detalles_pedido ORDER BY pedido_id, linea"
-        )
-        for fila in cursor.fetchall():
-            pedido_id = fila.pop("pedido_id")
-            pedidos[pedido_id]["detalles"].append(fila)
-        cursor.execute("SELECT pedido_id, estado FROM historial_pedido ORDER BY pedido_id, orden")
-        for fila in cursor.fetchall():
-            pedidos[fila["pedido_id"]]["historial"].append(fila["estado"])
-        cursor.execute("SELECT pedido_id, aprobado, referencia, medio, mensaje FROM pagos")
-        for fila in cursor.fetchall():
-            pedido_id = fila.pop("pedido_id")
-            pedidos[pedido_id]["pago"] = {**fila, "aprobado": bool(fila["aprobado"])}
-        return list(pedidos.values())
-
-    # --- escritura -----------------------------------------------------------
-
-    def _eliminar_pendientes(self, conexion) -> None:
-        cursor = conexion.cursor()
-        try:
-            for tabla in _ORDEN_DE_BORRADO:
-                claves = self._por_eliminar.get(tabla)
-                if not claves:
-                    continue
-                marcas = ", ".join(["%s"] * len(claves))
-                # Las líneas, el historial y el pago de un pedido se borran en cascada.
-                cursor.execute(f"DELETE FROM {tabla} WHERE id IN ({marcas})", tuple(claves))
-        finally:
-            cursor.close()
-
-    def _escribir(self, cursor, tabla: str, registros: list[dict]) -> None:
-        columnas = _COLUMNAS[tabla]
-        marcas = ", ".join(["%s"] * len(columnas))
-        actualiza = ", ".join(f"{columna} = VALUES({columna})" for columna in columnas[1:])
-        sentencia = (
-            f"INSERT INTO {tabla} ({', '.join(columnas)}) VALUES ({marcas}) "
-            f"ON DUPLICATE KEY UPDATE {actualiza}"
-        )
-        for registro in registros:
-            cursor.execute(sentencia, tuple(self._valor(registro.get(columna)) for columna in columnas))
-
-    def _escribir_partes_de_pedidos(self, cursor, pedidos: list[dict]) -> None:
-        for pedido in pedidos:
-            clave = (pedido["id"],)
-            cursor.execute("DELETE FROM detalles_pedido WHERE pedido_id = %s", clave)
-            cursor.execute("DELETE FROM historial_pedido WHERE pedido_id = %s", clave)
-            cursor.execute("DELETE FROM pagos WHERE pedido_id = %s", clave)
-            for linea, detalle in enumerate(pedido["detalles"], start=1):
-                cursor.execute(
-                    "INSERT INTO detalles_pedido (pedido_id, linea, producto_id, nombre, precio_unitario, cantidad) "
-                    "VALUES (%s, %s, %s, %s, %s, %s)",
-                    (
-                        pedido["id"],
-                        linea,
-                        detalle["producto_id"],
-                        detalle["nombre"],
-                        detalle["precio_unitario"],
-                        detalle["cantidad"],
-                    ),
-                )
-            for orden, estado in enumerate(pedido["historial"], start=1):
-                cursor.execute(
-                    "INSERT INTO historial_pedido (pedido_id, orden, estado) VALUES (%s, %s, %s)",
-                    (pedido["id"], orden, estado),
-                )
-            pago = pedido["pago"]
-            if pago is not None:
-                cursor.execute(
-                    "INSERT INTO pagos (pedido_id, aprobado, referencia, medio, mensaje) VALUES (%s, %s, %s, %s, %s)",
-                    (pedido["id"], int(pago["aprobado"]), pago["referencia"], pago["medio"], pago["mensaje"]),
-                )
 
     # --- conexión ------------------------------------------------------------
 
     @contextmanager
     def _cursor(self):
-        """Entrega un cursor. Fuera de una transacción abre una propia y la confirma al terminar."""
-        if self._conexion is None:
-            with self.transaccion():
-                with self._cursor() as cursor:
-                    yield cursor
-            return
+        """Cursor de la transacción en curso (siempre se usa dentro de `transaccion`)."""
         cursor = self._conexion.cursor(dictionary=True)
         try:
             yield cursor
@@ -321,17 +459,22 @@ class RepositorioMySQL(Repositorio):
         if codigo in _SIN_CONEXION:
             mensaje = (
                 f"No se pudo conectar a MySQL en {c.host}:{c.puerto}. "
-                "Revisa que el servidor esté encendido y los datos de Configuración."
+                "Revisa que el servidor esté encendido y los datos de configuracion.ini."
             )
         elif codigo == _ACCESO_DENEGADO:
             mensaje = f"MySQL rechazó al usuario {c.usuario}. Revisa el usuario y la contraseña."
         elif codigo in _SIN_BASE:
             mensaje = (
                 f"La base de datos {c.base_datos} no existe o el usuario {c.usuario} no tiene acceso. "
-                "Créala con database/01_esquema.sql."
+                "Créala ejecutando database/01_esquema.sql en MySQL Workbench."
             )
         elif codigo == _SIN_TABLA:
-            mensaje = f"A la base de datos {c.base_datos} le faltan tablas. Ejecuta database/01_esquema.sql."
+            mensaje = (
+                f"A la base de datos {c.base_datos} le faltan tablas. "
+                f"Ejecuta database/01_esquema.sql. Detalle: {getattr(error, 'msg', None) or error}"
+            )
+        elif codigo == _DUPLICADO:
+            mensaje = "MySQL rechazó el dato porque ya existe un registro con ese identificador."
         elif codigo in _DATO_EXCEDIDO:
             mensaje = (
                 "MySQL rechazó el dato porque supera el largo o el valor máximo de su columna. "
@@ -356,17 +499,3 @@ class RepositorioMySQL(Repositorio):
             conexion.close()
         except Exception:
             pass
-
-    @staticmethod
-    def _valor(valor):
-        return int(valor) if isinstance(valor, bool) else valor
-
-    @staticmethod
-    def _copia(registro: dict) -> dict:
-        copia = dict(registro)
-        for clave in ("detalles", "historial"):
-            if clave in copia:
-                copia[clave] = [dict(item) if isinstance(item, dict) else item for item in copia[clave]]
-        if isinstance(copia.get("pago"), dict):
-            copia["pago"] = dict(copia["pago"])
-        return copia

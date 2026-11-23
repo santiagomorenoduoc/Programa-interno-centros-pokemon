@@ -1,19 +1,13 @@
-# Centro Pokémon — Sistema Multi-Sede de Atención y Gestión
+# Base de datos MySQL
+1. En MySQL Workbench abre y ejecuta `db_centropkmn` (crea la base `centro_pokemon` y sus tablas).
+2. Abre `configuracion.ini` y escribe tu usuario y contraseña de MySQL
+3. `python -m pip install mysql-connector-python`
+4. Una sola vez, para pasar los datos de `data/*.json` a MySQL: `python migrar_a_mysql.py`
 
-Sistema de gestión para Centros Pokémon en Python con Tkinter, arquitectura MVC, persistencia JSON atómica y gestión de múltiples sedes/centros independientes.
-
-## Características Multi-Sede
-- **Centros/Sedes (`centros.json`)**: Registro independiente de sedes (ej. Ciudad Verde, Ciudad Plateada).
-- **Inventario por Centro**: Cada insumo o medicina pertenece exclusivamente a un `centro_id`.
-- **Personal por Centro**: Asignación de Enfermeras Joy a sedes específicas.
-- **Pacientes por Centro**: Admisión, triage y curación focalizados en la sede activa.
-- **Donaciones por Sede**: Aportes en ₽ o insumos direccionados al centro seleccionado.
+Con `motor = json` (o sin `configuracion.ini`) el sistema sigue guardando en `data/*.json`.
 
 ## Ejecución
 
-Requiere Python 3.10 o superior.
-
-```bash
 # Ejecutar interfaz gráfica
 python -m src.centropkmn
 
